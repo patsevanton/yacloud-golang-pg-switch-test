@@ -10,11 +10,12 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func ConnectToHost(cfg *Config, host string) (*pgx.Conn, error) {
+// ConnectToHost возвращает соединение и использованный DSN
+func ConnectToHost(cfg *Config, host string) (*pgx.Conn, string, error) {
 	// Получаем путь к директории с исполняемым файлом
 	exePath, err := os.Executable()
 	if err != nil {
-		return nil, fmt.Errorf("не удалось получить путь к исполняемому файлу: %v", err)
+		return nil, "", fmt.Errorf("не удалось получить путь к исполняемому файлу: %v", err)
 	}
 	exeDir := filepath.Dir(exePath)
 
@@ -24,12 +25,12 @@ func ConnectToHost(cfg *Config, host string) (*pgx.Conn, error) {
 	// Загрузка CA сертификата
 	caCert, err := os.ReadFile(certPath)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read CA cert: %v (path: %s)", err, certPath)
+		return nil, "", fmt.Errorf("unable to read CA cert: %v (path: %s)", err, certPath)
 	}
 
 	caCertPool := x509.NewCertPool()
 	if !caCertPool.AppendCertsFromPEM(caCert) {
-		return nil, fmt.Errorf("failed to add CA cert to pool")
+		return nil, "", fmt.Errorf("failed to add CA cert to pool")
 	}
 
 	// Формирование DSN
@@ -39,7 +40,7 @@ func ConnectToHost(cfg *Config, host string) (*pgx.Conn, error) {
 	// Парсинг конфигурации
 	connConfig, err := pgx.ParseConfig(dsn)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse config: %v", err)
+		return nil, dsn, fmt.Errorf("unable to parse config: %v", err)
 	}
 
 	// Настройка TLS
@@ -48,7 +49,8 @@ func ConnectToHost(cfg *Config, host string) (*pgx.Conn, error) {
 		ServerName: host, // Важно для проверки сертификата
 	}
 
-	return pgx.ConnectConfig(ctx, connConfig)
+	conn, err := pgx.ConnectConfig(ctx, connConfig)
+	return conn, dsn, err
 }
 
 func GetRole(conn *pgx.Conn) (string, error) {

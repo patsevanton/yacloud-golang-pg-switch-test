@@ -22,7 +22,7 @@ func CheckHosts(cfg *Config) {
 			log.Printf("[FQDN] Ошибка получения CNAME: %v\n", err)
 		}
 
-		conn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
+		conn, dsn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
 		if err != nil {
 			log.Printf("[FQDN] Ошибка подключения: %v\n", err)
 		} else {
@@ -31,16 +31,14 @@ func CheckHosts(cfg *Config) {
 			if err != nil {
 				log.Printf("[FQDN] Ошибка определения роли: %v\n", err)
 			} else {
-				// Форматируем вывод для FQDN (без IP в первой строке)
-				fmt.Printf("%s cname на хост %s\n",
-					cfg.ClusterFQDN, cnames)
-				// Добавляем использование role в вывод (с IP во второй строке)
+				// Выводим информацию о FQDN
+				fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cnames)
 				var ips []string
 				for _, ip := range fqdnIPs {
 					ips = append(ips, ip.String())
 				}
-				fmt.Printf("%s через libpq: %s(%s)\n",
-					role, cfg.ClusterFQDN, strings.Join(ips, ","))
+				fmt.Printf("%s через libpq: %s(%s)\n", role, cfg.ClusterFQDN, strings.Join(ips, ","))
+				fmt.Printf("DSN: %s\n", hidePasswordInDSN(dsn))
 			}
 		}
 	}
@@ -53,7 +51,7 @@ func CheckHosts(cfg *Config) {
 			continue
 		}
 
-		conn, err := ConnectToHost(cfg, host)
+		conn, dsn, err := ConnectToHost(cfg, host)
 		if err != nil {
 			if strings.Contains(err.Error(), "read only connection") {
 				// Пропускаем вывод для read-only реплик
@@ -68,13 +66,34 @@ func CheckHosts(cfg *Config) {
 		if err != nil {
 			log.Printf("[ХОСТ %s] Ошибка определения роли: %v\n", host, err)
 		} else {
-			// Форматируем вывод для хоста
+			// Выводим информацию о хосте
 			var ips []string
 			for _, ip := range hostIPs {
 				ips = append(ips, ip.String())
 			}
-			fmt.Printf("%s через libpq: %s(%s)\n",
-				role, host, strings.Join(ips, ","))
+			fmt.Printf("%s через libpq: %s(%s)\n", role, host, strings.Join(ips, ","))
+			fmt.Printf("DSN: %s\n", hidePasswordInDSN(dsn))
 		}
 	}
+}
+
+// hidePasswordInDSN скрывает пароль в DSN для безопасного вывода
+func hidePasswordInDSN(dsn string) string {
+	parts := strings.SplitN(dsn, "://", 2)
+	if len(parts) != 2 {
+		return dsn
+	}
+
+	authAndRest := strings.SplitN(parts[1], "@", 2)
+	if len(authAndRest) != 2 {
+		return dsn
+	}
+
+	userAndPass := strings.SplitN(authAndRest[0], ":", 2)
+	if len(userAndPass) != 2 {
+		return dsn
+	}
+
+	// Заменяем пароль на *****
+	return fmt.Sprintf("%s://%s:*****@%s", parts[0], userAndPass[0], authAndRest[1])
 }
