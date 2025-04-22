@@ -1,6 +1,3 @@
-//
-// Create a new MDB High Availability PostgreSQL Cluster.
-//
 resource "yandex_mdb_postgresql_cluster" "my_cluster" {
   name        = "ha"
   environment = "PRESTABLE"
@@ -31,7 +28,20 @@ resource "yandex_mdb_postgresql_cluster" "my_cluster" {
   }
 }
 
-// Auxiliary resources
+resource "yandex_mdb_postgresql_user" "my_user" {
+  cluster_id = yandex_mdb_postgresql_cluster.my_cluster.id
+  name       = "test"
+  password   = "SuperSecureP@ssw0rd"
+  conn_limit = 50
+}
+
+resource "yandex_mdb_postgresql_database" "my_db" {
+  cluster_id = yandex_mdb_postgresql_cluster.my_cluster.id
+  name       = "testdb"
+  owner      = yandex_mdb_postgresql_user.my_user.name
+
+}
+
 resource "yandex_vpc_network" "foo" {}
 
 resource "yandex_vpc_subnet" "foo" {
