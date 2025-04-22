@@ -33,14 +33,14 @@ func CheckHosts(cfg *Config) {
 			if err != nil {
 				log.Printf("[FQDN] Ошибка определения роли: %v\n", err)
 			} else {
-				// Форматируем вывод для FQDN
+				// Форматируем вывод для FQDN (без IP в первой строке)
+				fmt.Printf("%s cname на хост %s\n",
+					cfg.ClusterFQDN, cnames)
+				// Добавляем использование role в вывод (с IP во второй строке)
 				var ips []string
 				for _, ip := range fqdnIPs {
 					ips = append(ips, ip.String())
 				}
-				fmt.Printf("%s(%s) cname на хост %s\n",
-					cfg.ClusterFQDN, strings.Join(ips, ","), cnames)
-				// Добавляем использование role в вывод
 				fmt.Printf("%s через libpq: %s(%s)\n",
 					role, cfg.ClusterFQDN, strings.Join(ips, ","))
 			}
