@@ -11,8 +11,6 @@ import (
 var ctx = context.Background()
 
 func CheckHosts(cfg *Config) {
-	fmt.Println("Проверка роли для FQDN:", cfg.ClusterFQDN)
-
 	// Получаем IP для FQDN
 	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
 	if err != nil {
