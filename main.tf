@@ -15,16 +15,19 @@ resource "yandex_mdb_postgresql_cluster" "my_cluster" {
   host {
     zone      = "ru-central1-a"
     subnet_id = yandex_vpc_subnet.baz.id
+    assign_public_ip = true
   }
 
   host {
     zone      = "ru-central1-b"
     subnet_id = yandex_vpc_subnet.foo.id
+    assign_public_ip = true
   }
 
   host {
     zone      = "ru-central1-d"
     subnet_id = yandex_vpc_subnet.bar.id
+    assign_public_ip = true
   }
 }
 
