@@ -5,15 +5,26 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/jackc/pgx/v5"
 )
 
 func ConnectToHost(cfg *Config, host string) (*pgx.Conn, error) {
-	// Загрузка CA сертификата
-	caCert, err := os.ReadFile("/home/user/.postgresql/root.crt") // Укажите правильный путь к CA cert
+	// Получаем путь к директории с исполняемым файлом
+	exePath, err := os.Executable()
 	if err != nil {
-		return nil, fmt.Errorf("unable to read CA cert: %v", err)
+		return nil, fmt.Errorf("не удалось получить путь к исполняемому файлу: %v", err)
+	}
+	exeDir := filepath.Dir(exePath)
+
+	// Формируем путь к сертификату
+	certPath := filepath.Join(exeDir, "yandexcloud.crt")
+
+	// Загрузка CA сертификата
+	caCert, err := os.ReadFile(certPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read CA cert: %v (path: %s)", err, certPath)
 	}
 
 	caCertPool := x509.NewCertPool()
