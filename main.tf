@@ -1,8 +1,8 @@
 //
-// Create a new MDB PostgreSQL Cluster.
+// Create a new MDB High Availability PostgreSQL Cluster.
 //
 resource "yandex_mdb_postgresql_cluster" "my_cluster" {
-  name        = "test"
+  name        = "ha"
   environment = "PRESTABLE"
   network_id  = yandex_vpc_network.foo.id
 
@@ -13,24 +13,21 @@ resource "yandex_mdb_postgresql_cluster" "my_cluster" {
       disk_type_id       = "network-ssd"
       disk_size          = 16
     }
-    postgresql_config = {
-      max_connections                = 395
-      enable_parallel_hash           = true
-      autovacuum_vacuum_scale_factor = 0.34
-      default_transaction_isolation  = "TRANSACTION_ISOLATION_READ_COMMITTED"
-      shared_preload_libraries       = "SHARED_PRELOAD_LIBRARIES_AUTO_EXPLAIN,SHARED_PRELOAD_LIBRARIES_PG_HINT_PLAN"
-    }
   }
 
-  maintenance_window {
-    type = "WEEKLY"
-    day  = "SAT"
-    hour = 12
+  host {
+    zone      = "ru-central1-a"
+    subnet_id = yandex_vpc_subnet.baz.id
+  }
+
+  host {
+    zone      = "ru-central1-b"
+    subnet_id = yandex_vpc_subnet.foo.id
   }
 
   host {
     zone      = "ru-central1-d"
-    subnet_id = yandex_vpc_subnet.foo.id
+    subnet_id = yandex_vpc_subnet.bar.id
   }
 }
 
@@ -38,7 +35,19 @@ resource "yandex_mdb_postgresql_cluster" "my_cluster" {
 resource "yandex_vpc_network" "foo" {}
 
 resource "yandex_vpc_subnet" "foo" {
+  zone           = "ru-central1-b"
+  network_id     = yandex_vpc_network.foo.id
+  v4_cidr_blocks = ["10.1.0.0/24"]
+}
+
+resource "yandex_vpc_subnet" "bar" {
   zone           = "ru-central1-d"
   network_id     = yandex_vpc_network.foo.id
-  v4_cidr_blocks = ["10.5.0.0/24"]
+  v4_cidr_blocks = ["10.2.0.0/24"]
+}
+
+resource "yandex_vpc_subnet" "baz" {
+  zone           = "ru-central1-a"
+  network_id     = yandex_vpc_network.foo.id
+  v4_cidr_blocks = ["10.3.0.0/24"]
 }
