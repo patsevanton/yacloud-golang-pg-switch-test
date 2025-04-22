@@ -1,9 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"context"
+	"net"
 	"strings"
 )
 
@@ -11,20 +12,49 @@ var ctx = context.Background()
 
 func CheckHosts(cfg *Config) {
 	fmt.Println("Проверка роли для FQDN:", cfg.ClusterFQDN)
-	conn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
+
+	// Получаем IP для FQDN
+	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
 	if err != nil {
-		log.Printf("[FQDN] Ошибка подключения: %v\n", err)
+		log.Printf("[FQDN] Ошибка получения IP: %v\n", err)
 	} else {
-		defer conn.Close(ctx)
-		role, err := GetRole(conn)
+		// Получаем CNAME для FQDN
+		cnames, err := net.LookupCNAME(cfg.ClusterFQDN)
 		if err != nil {
-			log.Printf("[FQDN] Ошибка определения роли: %v\n", err)
+			log.Printf("[FQDN] Ошибка получения CNAME: %v\n", err)
+		}
+
+		conn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
+		if err != nil {
+			log.Printf("[FQDN] Ошибка подключения: %v\n", err)
 		} else {
-			fmt.Printf("[FQDN] Роль: %s\n", role)
+			defer conn.Close(ctx)
+			role, err := GetRole(conn)
+			if err != nil {
+				log.Printf("[FQDN] Ошибка определения роли: %v\n", err)
+			} else {
+				// Форматируем вывод для FQDN
+				var ips []string
+				for _, ip := range fqdnIPs {
+					ips = append(ips, ip.String())
+				}
+				fmt.Printf("%s(%s) cname на хост %s\n",
+					cfg.ClusterFQDN, strings.Join(ips, ","), cnames)
+				// Добавляем использование role в вывод
+				fmt.Printf("%s через libpq: %s(%s)\n",
+					role, cfg.ClusterFQDN, strings.Join(ips, ","))
+			}
 		}
 	}
 
 	for _, host := range cfg.Hosts {
+		// Получаем IP для хоста
+		hostIPs, err := net.LookupIP(host)
+		if err != nil {
+			log.Printf("[ХОСТ %s] Ошибка получения IP: %v\n", host, err)
+			continue
+		}
+
 		conn, err := ConnectToHost(cfg, host)
 		if err != nil {
 			if strings.Contains(err.Error(), "read only connection") {
@@ -40,7 +70,13 @@ func CheckHosts(cfg *Config) {
 		if err != nil {
 			log.Printf("[ХОСТ %s] Ошибка определения роли: %v\n", host, err)
 		} else {
-			fmt.Printf("[ХОСТ %s] Роль: %s\n", host, role)
+			// Форматируем вывод для хоста
+			var ips []string
+			for _, ip := range hostIPs {
+				ips = append(ips, ip.String())
+			}
+			fmt.Printf("%s через libpq: %s(%s)\n",
+				role, host, strings.Join(ips, ","))
 		}
 	}
 }
