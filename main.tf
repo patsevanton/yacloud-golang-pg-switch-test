@@ -51,3 +51,15 @@ resource "yandex_vpc_subnet" "baz" {
   network_id     = yandex_vpc_network.foo.id
   v4_cidr_blocks = ["10.3.0.0/24"]
 }
+
+output "cluster_fqdn" {
+  description = "FQDN for the PostgreSQL cluster"
+  value       = "c-${yandex_mdb_postgresql_cluster.my_cluster.id}.rw.mdb.yandexcloud.net"
+}
+
+output "hosts_fqdns" {
+  description = "FQDNs of all cluster hosts"
+  value       = [
+    for host in yandex_mdb_postgresql_cluster.my_cluster.host : host.fqdn
+  ]
+}
