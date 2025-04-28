@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
+
 	"github.com/joho/godotenv"
 )
+
+var ctx = context.Background()
 
 func main() {
 	err := godotenv.Load()
@@ -23,6 +27,6 @@ func main() {
 		fmt.Printf("\n=== Проверка %s ===\n", time.Now().Format("2006-01-02 15:04:05"))
 		CheckHosts(cfg)
 		time.Sleep(5 * time.Second)
-		fmt.Println() // Пустая строка между выводами
+		fmt.Println()
 	}
 }

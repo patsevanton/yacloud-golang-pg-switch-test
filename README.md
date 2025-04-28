@@ -57,7 +57,8 @@ HOSTS=rc1a-xxx.mdb.yandexcloud.net,rc1a-yyy.mdb.yandexcloud.net,rc1a-zzz.mdb.yan
 ### 3. Запустите утилиту
 
 ```bash
-go run main.go
+make build
+make run
 ```
 
 ---
