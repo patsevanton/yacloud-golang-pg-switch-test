@@ -37,6 +37,6 @@ func CheckClusterFQDN(cfg *Config) {
 	for _, ip := range fqdnIPs {
 		ips = append(ips, ip.String())
 	}
-	fmt.Printf("%s через libpq: %s(%s)\n", role, cfg.ClusterFQDN, strings.Join(ips, ","))
+	fmt.Printf("role %s через cname: %s(%s)\n", role, cfg.ClusterFQDN, strings.Join(ips, ","))
 	fmt.Printf("DSN: %s\n", hidePasswordInDSN(dsn))
 }

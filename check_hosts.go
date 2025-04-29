@@ -33,7 +33,7 @@ func CheckHosts(cfg *Config) {
 			for _, ip := range hostIPs {
 				ips = append(ips, ip.String())
 			}
-			fmt.Printf("%s через libpq: %s(%s)\n", role, host, strings.Join(ips, ","))
+			fmt.Printf("role %s через hosts: %s(%s)\n", role, host, strings.Join(ips, ","))
 			fmt.Printf("DSN: %s\n", hidePasswordInDSN(dsn))
 		}
 	}
