@@ -8,6 +8,8 @@ import (
 )
 
 func CheckClusterFQDN(cfg *Config) {
+	fmt.Println("проверка через cname:")
+
 	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
 	if err != nil {
 		log.Printf("[FQDN] Ошибка получения IP: %v\n", err)
@@ -21,6 +23,10 @@ func CheckClusterFQDN(cfg *Config) {
 
 	pool, dsn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
 	if err != nil {
+		if strings.Contains(err.Error(), "read only connection") {
+			// Не выводим ничего, если соединение read-only
+			return
+		}
 		log.Printf("[FQDN] Ошибка подключения: %v\n", err)
 		return
 	}
