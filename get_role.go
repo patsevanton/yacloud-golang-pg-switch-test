@@ -1,12 +1,14 @@
 package main
 
 import (
-	"github.com/jackc/pgx/v5"
+	"context"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetRole(conn *pgx.Conn) (string, error) {
+func GetRole(pool *pgxpool.Pool) (string, error) {
 	var isInRecovery bool
-	err := conn.QueryRow(ctx, "SELECT pg_is_in_recovery()").Scan(&isInRecovery)
+	err := pool.QueryRow(context.Background(), "SELECT pg_is_in_recovery()").Scan(&isInRecovery)
 	if err != nil {
 		return "", err
 	}

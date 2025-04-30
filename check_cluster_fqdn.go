@@ -19,14 +19,14 @@ func CheckClusterFQDN(cfg *Config) {
 		log.Printf("[FQDN] Ошибка получения CNAME: %v\n", err)
 	}
 
-	conn, dsn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
+	pool, dsn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
 	if err != nil {
 		log.Printf("[FQDN] Ошибка подключения: %v\n", err)
 		return
 	}
-	defer conn.Close(ctx)
+	defer pool.Close()
 
-	role, err := GetRole(conn)
+	role, err := GetRole(pool)
 	if err != nil {
 		log.Printf("[FQDN] Ошибка определения роли: %v\n", err)
 		return

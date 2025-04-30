@@ -15,7 +15,7 @@ func CheckHosts(cfg *Config) {
 			continue
 		}
 
-		conn, dsn, err := ConnectToHost(cfg, host)
+		pool, dsn, err := ConnectToHost(cfg, host)
 		if err != nil {
 			if strings.Contains(err.Error(), "read only connection") {
 				continue
@@ -23,9 +23,9 @@ func CheckHosts(cfg *Config) {
 			log.Printf("[ХОСТ %s] Ошибка подключения: %v\n", host, err)
 			continue
 		}
-		defer conn.Close(ctx)
+		defer pool.Close()
 
-		role, err := GetRole(conn)
+		role, err := GetRole(pool)
 		if err != nil {
 			log.Printf("[ХОСТ %s] Ошибка определения роли: %v\n", host, err)
 		} else {

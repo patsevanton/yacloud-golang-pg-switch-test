@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func ConnectToHost(cfg *Config, host string) (*pgx.Conn, string, error) {
+func ConnectToHost(cfg *Config, host string) (*pgxpool.Pool, string, error) {
 	exePath, err := os.Executable()
 	if err != nil {
 		return nil, "", fmt.Errorf("не удалось получить путь к исполняемому файлу: %v", err)
@@ -31,16 +31,20 @@ func ConnectToHost(cfg *Config, host string) (*pgx.Conn, string, error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:6432/%s?sslmode=verify-full&target_session_attrs=read-write",
 		cfg.PGUser, cfg.PGPassword, host, cfg.PGDB)
 
-	connConfig, err := pgx.ParseConfig(dsn)
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, dsn, fmt.Errorf("unable to parse config: %v", err)
 	}
 
-	connConfig.TLSConfig = &tls.Config{
+	config.ConnConfig.TLSConfig = &tls.Config{
 		RootCAs:    caCertPool,
 		ServerName: host,
 	}
 
-	conn, err := pgx.ConnectConfig(ctx, connConfig)
-	return conn, dsn, err
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		return nil, dsn, fmt.Errorf("unable to create connection pool: %v", err)
+	}
+
+	return pool, dsn, nil
 }
