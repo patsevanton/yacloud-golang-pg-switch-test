@@ -29,6 +29,12 @@ resource "yandex_mdb_postgresql_cluster" "my_cluster" {
     subnet_id = yandex_vpc_subnet.bar.id
     assign_public_ip = true
   }
+
+  timeouts {
+    create = "1h30m" # Полтора часа
+    update = "2h"    # 2 часа
+    delete = "1h"   # 30 минут
+  }
 }
 
 resource "yandex_mdb_postgresql_user" "my_user" {
