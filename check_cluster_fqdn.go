@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net"
-	"strings"
 )
 
 func CheckClusterFQDN(cfg *Config) {
@@ -12,37 +10,28 @@ func CheckClusterFQDN(cfg *Config) {
 
 	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
 	if err != nil {
-		log.Printf("[FQDN] Ошибка получения IP: %v\n", err)
 		return
 	}
 
-	cnames, err := net.LookupCNAME(cfg.ClusterFQDN)
-	if err != nil {
-		log.Printf("[FQDN] Ошибка получения CNAME: %v\n", err)
+	cname, err := net.LookupCNAME(cfg.ClusterFQDN)
+	if err == nil && cname != cfg.ClusterFQDN {
+		fmt.Printf("%s cname на хост %s.\n", cfg.ClusterFQDN, cname)
 	}
 
-	pool, dsn, err := ConnectToHost(cfg, cfg.ClusterFQDN)
+	pool, _, err := ConnectToHost(cfg, cfg.ClusterFQDN)
 	if err != nil {
-		if strings.Contains(err.Error(), "read only connection") {
-			// Не выводим ничего, если соединение read-only
-			return
-		}
-		log.Printf("[FQDN] Ошибка подключения: %v\n", err)
 		return
 	}
 	defer pool.Close()
 
 	role, err := GetRole(pool)
 	if err != nil {
-		log.Printf("[FQDN] Ошибка определения роли: %v\n", err)
 		return
 	}
 
-	fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cnames)
-	var ips []string
-	for _, ip := range fqdnIPs {
-		ips = append(ips, ip.String())
+	if len(fqdnIPs) == 0 {
+		return
 	}
-	fmt.Printf("role %s через cname: %s(%s)\n", role, cfg.ClusterFQDN, strings.Join(ips, ","))
-	fmt.Printf("DSN: %s\n", hidePasswordInDSN(dsn))
+
+	fmt.Printf("%s: %s(%s)\n", role, cfg.ClusterFQDN, fqdnIPs[0].String())
 }
