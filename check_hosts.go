@@ -29,5 +29,13 @@ func CheckHosts(cfg *Config) {
 		}
 
 		fmt.Printf("%s: %s(%s)\n", role, host, hostIPs[0].String())
+
+		// Добавляем проверку вставки
+		success, err := InsertCheckRecord(pool, host)
+		if err != nil {
+			fmt.Printf("Ошибка вставки для %s: %v\n", host, err)
+		} else if success {
+			fmt.Printf("insert successful для %s\n", host)
+		}
 	}
 }
