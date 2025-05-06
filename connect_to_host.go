@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -40,6 +41,11 @@ func ConnectToHost(cfg *Config, host string) (*pgxpool.Pool, string, error) {
 		RootCAs:    caCertPool,
 		ServerName: host,
 	}
+
+	// Минимальное количество соединений: 10
+	config.MinConns = 10
+	// Максимальное время жизни соединения (MaxConnLifetime): 1 час
+	config.MaxConnLifetime = time.Hour
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
