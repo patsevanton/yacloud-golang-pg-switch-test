@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strings"
+	"fmt"
 )
 
 type Config struct {
@@ -11,19 +11,11 @@ type Config struct {
 	PGPassword  string
 	PGDB        string
 	ClusterFQDN string
-	Hosts       []string
 }
 
 func LoadConfig() (*Config, error) {
-	hostsRaw := os.Getenv("HOSTS")
-	if hostsRaw == "" {
-		return nil, fmt.Errorf("переменная HOSTS не задана")
-	}
-
-	// Очистка хостов от пробелов
-	hosts := strings.Split(hostsRaw, ",")
-	for i, host := range hosts {
-		hosts[i] = strings.TrimSpace(host)
+	if os.Getenv("CLUSTER_FQDN") == "" {
+		return nil, fmt.Errorf("переменная CLUSTER_FQDN не задана")
 	}
 
 	return &Config{
@@ -31,6 +23,5 @@ func LoadConfig() (*Config, error) {
 		PGPassword:  os.Getenv("PG_PASSWORD"),
 		PGDB:        os.Getenv("PG_DB"),
 		ClusterFQDN: strings.TrimSpace(os.Getenv("CLUSTER_FQDN")),
-		Hosts:       hosts,
 	}, nil
 }
