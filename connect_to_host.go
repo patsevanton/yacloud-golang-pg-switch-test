@@ -30,7 +30,7 @@ func ConnectToHost(cfg *Config, host string) (*pgxpool.Pool, string, error) {
 	}
 
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:6432/%s?sslmode=verify-full&target_session_attrs=read-write",
-		cfg.PGUser, cfg.PGPassword, host, cfg.PGDB)
+		cfg.PGUser, cfg.PGPassword, host, cfg.PGDatabase)
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {

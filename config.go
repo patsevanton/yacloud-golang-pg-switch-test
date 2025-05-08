@@ -9,7 +9,7 @@ import (
 type Config struct {
 	PGUser      string
 	PGPassword  string
-	PGDB        string
+	PGDatabase  string
 	ClusterFQDN string
 }
 
@@ -21,7 +21,7 @@ func LoadConfig() (*Config, error) {
 	return &Config{
 		PGUser:      os.Getenv("PG_USER"),
 		PGPassword:  os.Getenv("PG_PASSWORD"),
-		PGDB:        os.Getenv("PG_DB"),
+		PGDatabase:  os.Getenv("PG_DB"),
 		ClusterFQDN: strings.TrimSpace(os.Getenv("CLUSTER_FQDN")),
 	}, nil
 }
