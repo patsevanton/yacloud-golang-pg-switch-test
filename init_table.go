@@ -14,18 +14,8 @@ func InitDatabase(cfg *Config) error {
 	var pool *pgxpool.Pool
 	var err error
 
-	// Сначала попробуем подключиться через ClusterFQDN
+	// Теперь подключаемся только через ClusterFQDN
 	pool, _, err = ConnectToHost(cfg, cfg.ClusterFQDN)
-	if err != nil {
-		// Если не удалось подключиться через ClusterFQDN, попробуем через хосты
-		for _, host := range cfg.Hosts {
-			pool, _, err = ConnectToHost(cfg, host)
-			if err == nil {
-				break
-			}
-		}
-	}
-
 	if err != nil {
 		return fmt.Errorf("не удалось подключиться к базе данных для инициализации: %v", err)
 	}
