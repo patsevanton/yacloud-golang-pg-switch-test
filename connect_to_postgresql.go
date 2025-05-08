@@ -4,9 +4,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
+	"net/url"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -29,8 +31,22 @@ func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error
 		return nil, "", fmt.Errorf("failed to add CA cert to pool")
 	}
 
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:6432/%s?sslmode=verify-full&target_session_attrs=read-write",
-		cfg.PGUser, cfg.PGPassword, host, cfg.PGDatabase)
+	params := url.Values{}
+	if cfg.PGSSLMode != "" {
+		params.Set("sslmode", cfg.PGSSLMode)
+	}
+	if cfg.PGTargetSessionAttrs != "" {
+		params.Set("target_session_attrs", cfg.PGTargetSessionAttrs)
+	}
+
+	dsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:6432/%s?%s",
+		url.QueryEscape(cfg.PGUser),
+		url.QueryEscape(cfg.PGPassword),
+		host,
+		url.PathEscape(cfg.PGDatabase),
+		params.Encode(),
+	)
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -49,6 +65,8 @@ func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error
 	if err != nil {
 		return nil, dsn, fmt.Errorf("unable to create connection pool: %v", err)
 	}
+
+    log.Printf("dsn: %v", dsn)
 
 	return pool, dsn, nil
 }

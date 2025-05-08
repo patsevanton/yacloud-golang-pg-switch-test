@@ -90,7 +90,8 @@ PG_USER=${yandex_mdb_postgresql_user.my_user.name}
 PG_PASSWORD=${yandex_mdb_postgresql_user.my_user.password}
 PG_DB=${yandex_mdb_postgresql_database.my_db.name}
 CLUSTER_FQDN=c-${yandex_mdb_postgresql_cluster.my_cluster.id}.rw.mdb.yandexcloud.net
-HOSTS=${join(",", [for host in yandex_mdb_postgresql_cluster.my_cluster.host : host.fqdn])}
+PG_SSLMODE=verify-full
+PG_TARGET_SESSION_ATTRS=read-write
 EOT
 }
 
