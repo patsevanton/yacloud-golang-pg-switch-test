@@ -13,7 +13,7 @@ func InitDatabase(cfg *Config) error {
 	var pool *pgxpool.Pool
 	var err error
 
-	pool, _, err = ConnectToHost(cfg, cfg.ClusterFQDN)
+	pool, _, err = ConnectToPostgreSQL(cfg, cfg.ClusterFQDN)
 	if err != nil {
 		return fmt.Errorf("не удалось подключиться к базе данных для инициализации: %v", err)
 	}

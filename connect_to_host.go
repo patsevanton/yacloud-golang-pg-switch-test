@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func ConnectToHost(cfg *Config, host string) (*pgxpool.Pool, string, error) {
+func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error) {
 	exePath, err := os.Executable()
 	if err != nil {
 		return nil, "", fmt.Errorf("не удалось получить путь к исполняемому файлу: %v", err)
