@@ -19,15 +19,6 @@ func InitDatabase(cfg *Config) error {
 	}
 	defer pool.Close()
 
-	role, err := GetRole(pool)
-	if err != nil {
-		return fmt.Errorf("ошибка определения роли: %v", err)
-	}
-
-	if role != "master" {
-		return fmt.Errorf("для инициализации таблицы требуется подключение к мастеру")
-	}
-
 	_, err = pool.Exec(context.Background(), `
 		CREATE TABLE IF NOT EXISTS health_check (
 			id SERIAL PRIMARY KEY,

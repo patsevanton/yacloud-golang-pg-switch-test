@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -65,8 +64,6 @@ func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error
 	if err != nil {
 		return nil, dsn, fmt.Errorf("unable to create connection pool: %v", err)
 	}
-
-    log.Printf("dsn: %v", dsn)
 
 	return pool, dsn, nil
 }

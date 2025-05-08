@@ -24,8 +24,6 @@ func InsertCheckRecord(pool *pgxpool.Pool, host string) (bool, error) {
 }
 
 func CheckClusterFQDN(cfg *Config) {
-	fmt.Println("проверка через cname:")
-
 	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
 	if err != nil {
 		return
@@ -42,16 +40,9 @@ func CheckClusterFQDN(cfg *Config) {
 	}
 	defer pool.Close()
 
-	role, err := GetRole(pool)
-	if err != nil {
-		return
-	}
-
 	if len(fqdnIPs) == 0 {
 		return
 	}
-
-	fmt.Printf("%s: %s(%s)\n", role, cfg.ClusterFQDN, fqdnIPs[0].String())
 
 	success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
 	if err != nil {
