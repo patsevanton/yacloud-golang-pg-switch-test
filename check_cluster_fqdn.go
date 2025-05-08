@@ -31,7 +31,7 @@ func CheckClusterFQDN(cfg *Config) {
 
 	cname, err := net.LookupCNAME(cfg.ClusterFQDN)
 	if err == nil && cname != cfg.ClusterFQDN {
-		fmt.Printf("%s cname на хост %s.\n", cfg.ClusterFQDN, cname)
+		fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cname)
 	}
 
 	pool, _, err := ConnectToPostgreSQL(cfg, cfg.ClusterFQDN)
