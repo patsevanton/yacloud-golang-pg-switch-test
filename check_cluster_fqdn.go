@@ -35,7 +35,6 @@ func CheckClusterFQDN(cfg *Config) {
 
 	fmt.Printf("%s: %s(%s)\n", role, cfg.ClusterFQDN, fqdnIPs[0].String())
 
-	// Добавляем проверку вставки
 	success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
 	if err != nil {
 		fmt.Printf("Ошибка вставки для %s: %v\n", cfg.ClusterFQDN, err)

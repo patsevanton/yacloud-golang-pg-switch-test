@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// hidePasswordInDSN скрывает пароль в DSN для безопасного вывода
 func hidePasswordInDSN(dsn string) string {
 	parts := strings.SplitN(dsn, "://", 2)
 	if len(parts) != 2 {

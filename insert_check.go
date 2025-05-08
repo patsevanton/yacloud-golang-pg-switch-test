@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// InsertCheckRecord вставляет запись в таблицу health_check
 func InsertCheckRecord(pool *pgxpool.Pool, host string) (bool, error) {
 	message := fmt.Sprintf("Проверка подключения к %s в %s", host, time.Now().Format("2006-01-02 15:04:05"))
 

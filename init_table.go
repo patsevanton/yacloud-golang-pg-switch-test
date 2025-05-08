@@ -7,21 +7,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// InitDatabase создает таблицу для проверки, если она не существует
 func InitDatabase(cfg *Config) error {
 	fmt.Println("Инициализация базы данных...")
 
 	var pool *pgxpool.Pool
 	var err error
 
-	// Теперь подключаемся только через ClusterFQDN
 	pool, _, err = ConnectToHost(cfg, cfg.ClusterFQDN)
 	if err != nil {
 		return fmt.Errorf("не удалось подключиться к базе данных для инициализации: %v", err)
 	}
 	defer pool.Close()
 
-	// Получаем роль, чтобы убедиться, что мы подключены к мастеру
 	role, err := GetRole(pool)
 	if err != nil {
 		return fmt.Errorf("ошибка определения роли: %v", err)
@@ -31,7 +28,6 @@ func InitDatabase(cfg *Config) error {
 		return fmt.Errorf("для инициализации таблицы требуется подключение к мастеру")
 	}
 
-	// Создаем таблицу, если она не существует
 	_, err = pool.Exec(context.Background(), `
 		CREATE TABLE IF NOT EXISTS health_check (
 			id SERIAL PRIMARY KEY,

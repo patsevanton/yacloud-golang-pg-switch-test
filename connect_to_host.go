@@ -42,9 +42,7 @@ func ConnectToHost(cfg *Config, host string) (*pgxpool.Pool, string, error) {
 		ServerName: host,
 	}
 
-	// Минимальное количество соединений: 10
 	config.MinConns = 10
-	// Максимальное время жизни соединения (MaxConnLifetime): 1 час
 	config.MaxConnLifetime = time.Hour
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
