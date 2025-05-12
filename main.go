@@ -30,7 +30,7 @@ func main() {
 	for {
 		fmt.Printf("\n=== Проверка %s ===\n", time.Now().Format("2006-01-02 15:04:05"))
 		CheckClusterFQDN(cfg)
-		time.Sleep(5 * time.Second)
+		time.Sleep(500 * time.Millisecond)
 		fmt.Println()
 	}
 }

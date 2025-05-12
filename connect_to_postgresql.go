@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
+// 	"time"
 	"net/url"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,7 +39,7 @@ func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error
 	}
 
 	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:6432/%s?%s",
+		"postgres://%s:%s@%s:6432/%s?%s&pool_max_conn_lifetime=1h&pool_max_conn_idle_time=30m",
 		url.QueryEscape(cfg.PGUser),
 		url.QueryEscape(cfg.PGPassword),
 		host,
@@ -58,7 +58,7 @@ func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error
 	}
 
 	config.MinConns = 10
-	config.MaxConnLifetime = time.Hour
+
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
