@@ -140,27 +140,36 @@ func InsertCheckRecord(pool *pgxpool.Pool, host string) (bool, error) {
 
 // CheckClusterFQDN проверяет соединение с кластером и записывает результат
 func CheckClusterFQDN(cfg *Config) {
-	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
-	if err != nil || len(fqdnIPs) == 0 {
-		return
-	}
+    fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
+    if err != nil || len(fqdnIPs) == 0 {
+        return
+    }
 
-	if cname, err := net.LookupCNAME(cfg.ClusterFQDN); err == nil && cname != cfg.ClusterFQDN {
-		fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cname)
-	}
+    if cname, err := net.LookupCNAME(cfg.ClusterFQDN); err == nil && cname != cfg.ClusterFQDN {
+        fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cname)
+    }
 
-	pool, _, err := ConnectToPostgreSQL(cfg, cfg.ClusterFQDN)
-	if err != nil {
-		return
-	}
-	defer pool.Close()
+    pool, _, err := ConnectToPostgreSQL(cfg, cfg.ClusterFQDN)
+    if err != nil {
+        return
+    }
+    defer pool.Close()
 
-	success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
-	if err != nil {
-		fmt.Printf("Ошибка вставки для %s: %v\n", cfg.ClusterFQDN, err)
-	} else if success {
-		fmt.Printf("insert successful для %s\n", cfg.ClusterFQDN)
-	}
+    // Вывод статистики пула соединений
+    stats := pool.Stat()
+    fmt.Printf("Статистика пула:\n")
+    fmt.Printf("  - Всего соединений: %d\n", stats.TotalConns())
+    fmt.Printf("  - Активных соединений: %d\n", stats.AcquiredConns())
+    fmt.Printf("  - Простаивающих соединений: %d\n", stats.IdleConns())
+    fmt.Printf("  - Максимум соединений: %d\n", stats.MaxConns())
+    fmt.Printf("  - Конструирующихся соединений: %d\n", stats.ConstructingConns())
+
+    success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
+    if err != nil {
+        fmt.Printf("Ошибка вставки для %s: %v\n", cfg.ClusterFQDN, err)
+    } else if success {
+        fmt.Printf("insert successful для %s\n", cfg.ClusterFQDN)
+    }
 }
 
 func main() {
