@@ -1,29 +1,31 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
-	"fmt"
 )
 
 type Config struct {
-	PGUser                string
-	PGPassword            string
-	PGDatabase            string
-	ClusterFQDN           string
-	PGSSLMode             string
-	PGTargetSessionAttrs  string
+	PGUser               string
+	PGPassword           string
+	PGDatabase           string
+	ClusterFQDN          string
+	PGSSLMode            string
+	PGTargetSessionAttrs string
 }
 
 func LoadConfig() (*Config, error) {
-	if os.Getenv("CLUSTER_FQDN") == "" {
-		return nil, fmt.Errorf("переменная CLUSTER_FQDN не задана")
+	requiredVars := map[string]string{
+		"CLUSTER_FQDN":           "переменная CLUSTER_FQDN не задана",
+		"PG_SSLMODE":             "переменная PG_SSLMODE не задана",
+		"PG_TARGET_SESSION_ATTRS": "переменная PG_TARGET_SESSION_ATTRS не задана",
 	}
-	if os.Getenv("PG_SSLMODE") == "" {
-		return nil, fmt.Errorf("переменная PG_SSLMODE не задана")
-	}
-	if os.Getenv("PG_TARGET_SESSION_ATTRS") == "" {
-		return nil, fmt.Errorf("переменная PG_TARGET_SESSION_ATTRS не задана")
+
+	for env, msg := range requiredVars {
+		if os.Getenv(env) == "" {
+			return nil, fmt.Errorf(msg)
+		}
 	}
 
 	return &Config{

@@ -12,8 +12,7 @@ import (
 var ctx = context.Background()
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Ошибка загрузки .env файла: %v", err)
 	}
 
@@ -22,8 +21,7 @@ func main() {
 		log.Fatalf("Ошибка загрузки конфигурации: %v", err)
 	}
 
-	err = InitDatabase(cfg)
-	if err != nil {
+	if err := InitDatabase(cfg); err != nil {
 		log.Printf("Предупреждение: %v", err)
 	}
 

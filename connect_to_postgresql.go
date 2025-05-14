@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-// 	"time"
 	"net/url"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,9 +16,8 @@ func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error
 	if err != nil {
 		return nil, "", fmt.Errorf("не удалось получить путь к исполняемому файлу: %v", err)
 	}
-	exeDir := filepath.Dir(exePath)
-	certPath := filepath.Join(exeDir, "yandexcloud.crt")
 
+	certPath := filepath.Join(filepath.Dir(exePath), "yandexcloud.crt")
 	caCert, err := os.ReadFile(certPath)
 	if err != nil {
 		return nil, "", fmt.Errorf("unable to read CA cert: %v (path: %s)", err, certPath)
@@ -56,14 +54,9 @@ func ConnectToPostgreSQL(cfg *Config, host string) (*pgxpool.Pool, string, error
 		RootCAs:    caCertPool,
 		ServerName: host,
 	}
-
 	config.MinConns = 10
 
-
 	pool, err := pgxpool.NewWithConfig(ctx, config)
-	if err != nil {
-		return nil, dsn, fmt.Errorf("unable to create connection pool: %v", err)
-	}
 
-	return pool, dsn, nil
+	return pool, dsn, err
 }

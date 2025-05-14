@@ -11,26 +11,17 @@ import (
 
 func InsertCheckRecord(pool *pgxpool.Pool, host string) (bool, error) {
 	message := fmt.Sprintf("Проверка подключения к %s в %s", host, time.Now().Format("2006-01-02 15:04:05"))
-
-	_, err := pool.Exec(context.Background(), `
-		INSERT INTO health_check (message) VALUES ($1)
-	`, message)
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	_, err := pool.Exec(context.Background(), `INSERT INTO health_check (message) VALUES ($1)`, message)
+	return err == nil, err
 }
 
 func CheckClusterFQDN(cfg *Config) {
 	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
-	if err != nil {
+	if err != nil || len(fqdnIPs) == 0 {
 		return
 	}
 
-	cname, err := net.LookupCNAME(cfg.ClusterFQDN)
-	if err == nil && cname != cfg.ClusterFQDN {
+	if cname, err := net.LookupCNAME(cfg.ClusterFQDN); err == nil && cname != cfg.ClusterFQDN {
 		fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cname)
 	}
 
@@ -39,10 +30,6 @@ func CheckClusterFQDN(cfg *Config) {
 		return
 	}
 	defer pool.Close()
-
-	if len(fqdnIPs) == 0 {
-		return
-	}
 
 	success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
 	if err != nil {
