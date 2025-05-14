@@ -53,6 +53,7 @@ func LoadConfig() (*Config, error) {
 		PGDatabase:           os.Getenv("PG_DB"),
 		ClusterFQDN:          strings.TrimSpace(os.Getenv("CLUSTER_FQDN")),
 		PGSSLMode:            os.Getenv("PG_SSLMODE"),
+		PGTargetSessionAttrs: os.Getenv("PG_TARGET_SESSION_ATTRS"),
 	}, nil
 }
 
@@ -77,6 +78,9 @@ func CreateConnectionPool(cfg *Config, host string) (*pgxpool.Pool, error) {
 	params := url.Values{}
 	if cfg.PGSSLMode != "" {
 		params.Set("sslmode", cfg.PGSSLMode)
+	}
+	if cfg.PGTargetSessionAttrs != "" {
+		params.Set("target_session_attrs", cfg.PGTargetSessionAttrs)
 	}
 
 	dsn := fmt.Sprintf(
