@@ -159,17 +159,18 @@ func CheckClusterFQDN(cfg *Config, pool *pgxpool.Pool) {
         fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cname)
     }
 
-    // Вывод статистики пула соединений
-    stats := pool.Stat()
-    fmt.Printf("Статистика пула:\n")
-    fmt.Printf("  - Всего соединений: %d\n", stats.TotalConns())
-    fmt.Printf("  - Активных соединений: %d\n", stats.AcquiredConns())
-    fmt.Printf("  - Простаивающих соединений: %d\n", stats.IdleConns())
-    fmt.Printf("  - Максимум соединений: %d\n", stats.MaxConns())
-    fmt.Printf("  - Конструирующихся соединений: %d\n", stats.ConstructingConns())
+
 
 	for {
 		fmt.Printf("\n=== Проверка %s ===\n", time.Now().Format("2006-01-02 15:04:05"))
+        // Вывод статистики пула соединений
+        stats := pool.Stat()
+        fmt.Printf("Статистика пула:\n")
+        fmt.Printf("  - Всего соединений: %d\n", stats.TotalConns())
+        fmt.Printf("  - Активных соединений: %d\n", stats.AcquiredConns())
+        fmt.Printf("  - Простаивающих соединений: %d\n", stats.IdleConns())
+        fmt.Printf("  - Максимум соединений: %d\n", stats.MaxConns())
+        fmt.Printf("  - Конструирующихся соединений: %d\n", stats.ConstructingConns())
         // Получаем соединение из пула (это происходит автоматически при выполнении операций)
         success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
         if err != nil {
@@ -177,7 +178,7 @@ func CheckClusterFQDN(cfg *Config, pool *pgxpool.Pool) {
         } else if success {
             fmt.Printf("Insert successful для %s\n", cfg.ClusterFQDN)
         }
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 		fmt.Println()
 	}
 }
