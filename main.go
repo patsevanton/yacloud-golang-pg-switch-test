@@ -5,7 +5,9 @@ import (
 	"log"
 	"time"
 	"fmt"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -16,7 +18,32 @@ import (
 func main() {
 	ctx := context.TODO()
 
-	connString := "postgres://test:xxxxx@c-xxxxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
+	// Загружаем переменные окружения из файла .env
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Ошибка загрузки .env файла: %v", err)
+	}
+
+	pgHost := os.Getenv("PG_HOST")
+	pgPort := os.Getenv("PG_PORT")
+	pgUser := os.Getenv("PG_USER")
+	pgPassword := os.Getenv("PG_PASSWORD")
+	pgDB := os.Getenv("PG_DB")
+	poolMaxConns := os.Getenv("POOL_MAX_CONNS")
+	poolMinConns := os.Getenv("POOL_MIN_CONNS")
+	poolMaxConnLifetime := os.Getenv("POOL_MAX_CONN_LIFETIME")
+	poolMaxConnIdleTime := os.Getenv("POOL_MAX_CONN_IDLE_TIME")
+	defaultQueryExecMode := os.Getenv("DEFAULT_QUERY_EXEC_MODE")
+
+	connString1 := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?pool_max_conns=%s&pool_min_conns=%s&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&default_query_exec_mode=%s",
+		pgUser, pgPassword, pgHost, pgPort, pgDB, poolMaxConns, poolMinConns, poolMaxConnLifetime, poolMaxConnIdleTime, defaultQueryExecMode,
+	)
+
+	fmt.Println("Postgres connection string:")
+	fmt.Println(connString1)
+
+	connString := "postgres://test:xxxx@c-xxxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
 		"pool_max_conns=2&pool_min_conns=10&pool_max_conn_lifetime=1h" +
 		"&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol"
 
