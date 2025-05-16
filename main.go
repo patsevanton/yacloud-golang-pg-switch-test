@@ -76,7 +76,7 @@ func CreateConnectionPool(cfg *Config, host string) (*pgxpool.Pool, error) {
 	}
 
 	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:6432/%s?%s&pool_max_conn_lifetime=1h&pool_max_conn_idle_time=30m&sslmode=disable&target_session_attrs=any",
+		"postgres://%s:%s@%s:6432/%s?pool_max_conn_lifetime=1h&pool_max_conn_idle_time=30m&sslmode=disable&target_session_attrs=any",
 		url.QueryEscape(cfg.PGUser),
 		url.QueryEscape(cfg.PGPassword),
 		host,
