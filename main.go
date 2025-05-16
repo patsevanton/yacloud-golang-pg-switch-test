@@ -17,13 +17,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Глобальный контекст
 var ctx = context.Background()
-
-// Глобальный пул соединений
 var globalPool *pgxpool.Pool
 
-// Config содержит настройки подключения к PostgreSQL
 type Config struct {
 	PGUser               string
 	PGPassword           string
@@ -33,7 +29,6 @@ type Config struct {
 	PGTargetSessionAttrs string
 }
 
-// LoadConfig загружает конфигурацию из переменных окружения
 func LoadConfig() (*Config, error) {
 	requiredVars := map[string]string{
 		"CLUSTER_FQDN":            "переменная CLUSTER_FQDN не задана",
@@ -57,14 +52,8 @@ func LoadConfig() (*Config, error) {
 	}, nil
 }
 
-// CreateConnectionPool создает пул соединений с PostgreSQL
 func CreateConnectionPool(cfg *Config, host string) (*pgxpool.Pool, error) {
-	exePath, err := os.Executable()
-	if err != nil {
-		return nil, fmt.Errorf("не удалось получить путь к исполняемому файлу: %v", err)
-	}
-
-	certPath := filepath.Join(filepath.Dir(exePath), "yandexcloud.crt")
+	certPath := filepath.Join(filepath.Dir(os.Args[0]), "yandexcloud.crt")
 	caCert, err := os.ReadFile(certPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read CA cert: %v (path: %s)", err, certPath)
@@ -93,16 +82,14 @@ func CreateConnectionPool(cfg *Config, host string) (*pgxpool.Pool, error) {
 		ServerName: host,
 	}
 
-	// Настройки пула соединений
-	config.MinConns = 5     // Минимальное количество соединений в пуле
-	config.MaxConns = 20    // Максимальное количество соединений в пуле
+	config.MinConns = 5
+	config.MaxConns = 20
 
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка создания пула соединений: %v", err)
 	}
 
-	// Проверяем подключение
 	if err := pool.Ping(ctx); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("ошибка при проверке подключения: %v", err)
@@ -111,57 +98,42 @@ func CreateConnectionPool(cfg *Config, host string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// InitDatabase инициализирует таблицу health_check в базе данных
 func InitDatabase(pool *pgxpool.Pool) error {
-	fmt.Println("Инициализация базы данных...")
-
-	_, err := pool.Exec(context.Background(), `
-		CREATE TABLE IF NOT EXISTS health_check (
-			id SERIAL PRIMARY KEY,
-			check_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			message TEXT
-		)
-	`)
-
-	if err != nil {
-		return fmt.Errorf("ошибка создания таблицы: %v", err)
-	}
-
-	fmt.Println("Таблица health_check успешно инициализирована")
-	return nil
+	_, err := pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS health_check (
+		id SERIAL PRIMARY KEY,
+		check_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+		message TEXT
+	)`)
+	return err
 }
 
-// InsertCheckRecord добавляет запись о проверке в таблицу health_check
 func InsertCheckRecord(pool *pgxpool.Pool, host string) (bool, error) {
 	message := fmt.Sprintf("Проверка подключения к %s в %s", host, time.Now().Format("2006-01-02 15:04:05"))
-
-	_, err := pool.Exec(context.Background(), `INSERT INTO health_check (message) VALUES ($1)`, message)
+	_, err := pool.Exec(ctx, `INSERT INTO health_check (message) VALUES ($1)`, message)
 	return err == nil, err
 }
 
-// CheckClusterFQDN проверяет соединение с кластером и записывает результат
 func CheckClusterFQDN(cfg *Config, pool *pgxpool.Pool) {
-    fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
-    if err != nil || len(fqdnIPs) == 0 {
-        fmt.Printf("Ошибка при поиске IP для %s: %v\n", cfg.ClusterFQDN, err)
-        return
-    }
+	fqdnIPs, err := net.LookupIP(cfg.ClusterFQDN)
+	if err != nil || len(fqdnIPs) == 0 {
+		fmt.Printf("Ошибка при поиске IP для %s: %v\n", cfg.ClusterFQDN, err)
+		return
+	}
 
-    if cname, err := net.LookupCNAME(cfg.ClusterFQDN); err == nil && cname != cfg.ClusterFQDN {
-        fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cname)
-    }
+	if cname, err := net.LookupCNAME(cfg.ClusterFQDN); err == nil && cname != cfg.ClusterFQDN {
+		fmt.Printf("%s cname на хост %s\n", cfg.ClusterFQDN, cname)
+	}
 
 	for {
 		fmt.Printf("\n=== Проверка %s ===\n", time.Now().Format("2006-01-02 15:04:05"))
 
-        success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
-        if err != nil {
-            fmt.Printf("Ошибка вставки для %s: %v\n", cfg.ClusterFQDN, err)
-        } else if success {
-            fmt.Printf("Insert successful для %s\n", cfg.ClusterFQDN)
-        }
+		success, err := InsertCheckRecord(pool, cfg.ClusterFQDN)
+		if err != nil {
+			fmt.Printf("Ошибка вставки для %s: %v\n", cfg.ClusterFQDN, err)
+		} else if success {
+			fmt.Printf("Insert successful для %s\n", cfg.ClusterFQDN)
+		}
 		time.Sleep(5 * time.Second)
-		fmt.Println()
 	}
 }
 
@@ -175,20 +147,15 @@ func main() {
 		log.Fatalf("Ошибка загрузки конфигурации: %v", err)
 	}
 
-	// Создаем глобальный пул соединений при запуске
 	globalPool, err = CreateConnectionPool(cfg, cfg.ClusterFQDN)
 	if err != nil {
 		log.Fatalf("Ошибка создания пула соединений: %v", err)
 	}
-	defer globalPool.Close() // Закрываем пул при завершении программы
+	defer globalPool.Close()
 
-	fmt.Println("Успешно создан пул соединений к PostgreSQL")
-
-	// Инициализируем базу данных
 	if err := InitDatabase(globalPool); err != nil {
 		log.Printf("Предупреждение: %v", err)
 	}
 
 	CheckClusterFQDN(cfg, globalPool)
-
 }

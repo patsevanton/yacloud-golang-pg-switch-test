@@ -1,10 +1,6 @@
 .PHONY: build run tidy
 
-build:
-	go build -o switch-checker *.go
-
-run: tidy build
-	./switch-checker
-
-tidy:
+run:
 	go mod tidy
+	go build -o switch-checker *.go
+	./switch-checker
