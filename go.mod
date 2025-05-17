@@ -5,7 +5,6 @@ go 1.21
 require (
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/joho/godotenv v1.5.1
 )
 
 require (
