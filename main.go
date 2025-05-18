@@ -21,7 +21,7 @@ func main() {
 	ctx := context.TODO()
 
 	connString := "postgres://test:xxxx@c-xxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
-		"pool_max_conns=2&pool_min_conns=10&pool_max_conn_lifetime=1h" +
+		"pool_max_conns=10&pool_min_conns=10&pool_max_conn_lifetime=1h" +
 		"&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol"
 
 	db, pool, err := GetDB(ctx, connString)
@@ -111,9 +111,6 @@ func GetDB(ctx context.Context, uri string) (*sqlx.DB, *pgxpool.Pool, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
-	DB.SetMaxIdleConns(0)
-	DB.SetMaxOpenConns(10)
 
 	return DB, pool, nil
 }
