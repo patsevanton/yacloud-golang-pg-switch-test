@@ -51,50 +51,14 @@ PG_USER=your_username
 PG_PASSWORD=your_password
 PG_DB=your_database
 CLUSTER_FQDN=c-<cluster_id>.rw.mdb.yandexcloud.net
-HOSTS=rc1a-xxx.mdb.yandexcloud.net,rc1a-yyy.mdb.yandexcloud.net,rc1a-zzz.mdb.yandexcloud.net
 ```
 
 ### 3. Запустите утилиту
 
 ```bash
-make build
 make run
 ```
-
----
-
-## 🧪 Что делает программа
-
-1. Подключается к `CLUSTER_FQDN` и определяет мастера.
-2. Подключается к каждому из `HOSTS` и проверяет их роли.
-3. Сравнивает результаты — особенно полезно при тестах failover'а.
-4. Выводит логи в консоль (можно доработать под Prometheus/файлы и т.п.)
-
----
-
-## 📋 Пример вывода
-
-```
-[FQDN КЛАСТЕРА] Подключено: c-abcde.rw.mdb.yandexcloud.net | Роль: master
-[ХОСТ] rc1a-xxx.mdb.yandexcloud.net | Роль: replica
-[ХОСТ] rc1a-yyy.mdb.yandexcloud.net | Роль: master
-[ХОСТ] rc1a-zzz.mdb.yandexcloud.net | Роль: replica
-✅ Мастер соответствует ожидаемому
-```
-
----
-
-## 📌 Требования
-
-- Go 1.18+
-- Драйвер PostgreSQL: `github.com/jackc/pgx`
-
----
 
 ## 🤝 Контрибьютинг
 
 Пулл-реквесты приветствуются! Открывайте issue или предлагайте улучшения.
-
-```
-https://pkg.go.dev/github.com/jackc/pgx/v4/pgxpool#Stat
-```
