@@ -85,7 +85,7 @@ for PostgreSQL вы можете инициировать операцию пе�
 
 ```
 2025/05/18 12:45:10 Connected!!
-2025/05/18 12:45:10 postgres://test:SuperSecurePassw0rd@c-xxxxxxxxx.rw.mdb.yandexcloud.net:6432/testdb?pool_max_conns=2&pool_min_conns=2&pool_max_conn_lifetime=1h&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol&target_session_attrs=any
+2025/05/18 12:45:10 postgres://test:пароль@c-xxxxxxxxx.rw.mdb.yandexcloud.net:6432/testdb?pool_max_conns=2&pool_min_conns=2&pool_max_conn_lifetime=1h&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol&target_session_attrs=any
 ... (успешные вставки)
 2025/05/18 12:46:16 Successful [Pool total: 2, acquired: 0, idle: 2 | IP: 62.84.123.60, Type: Master]: rows affected: 1
 // Начинается переключение мастера, или приложение подключилось к реплике

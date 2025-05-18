@@ -40,7 +40,7 @@ resource "yandex_mdb_postgresql_cluster" "my_cluster" {
 resource "yandex_mdb_postgresql_user" "my_user" {
   cluster_id = yandex_mdb_postgresql_cluster.my_cluster.id
   name       = "test"
-  password   = "SuperSecurePassw0rd"
+  password   = "" # укажите здесь пароль к PostgreSQL
   conn_limit = 50
 }
 
