@@ -5,25 +5,32 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
 
-// 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
-// https://github.com/jackc/pgx/issues/81#issuecomment-1422484059
-// with a bit of dopiling
 func main() {
+	// Загружаем переменные окружения из .env файла
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: no .env file found, trying to read env from system")
+	}
+
 	ctx := context.TODO()
+	connString1 := buildConnStringFromEnv()
+	log.Println(connString1)
 
 	connString := "postgres://test:xxxx@c-xxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
-		"pool_max_conns=10&pool_min_conns=10&pool_max_conn_lifetime=1h" +
+		"pool_max_conns=2&pool_min_conns=2&pool_max_conn_lifetime=1h" +
 		"&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol"
 
+	log.Println(connString)
 	db, pool, err := GetDB(ctx, connString)
 	if err != nil {
 		log.Fatal(err)
@@ -43,51 +50,62 @@ func main() {
 			`insert into "test" ("created_at") values ($1)`, time.Now())
 
 		if err != nil {
-			// Получаем информацию о состоянии подключения
 			connInfo := GetConnectionInfo(ctx, pool)
-
-			// Логируем ошибку вместе с информацией о подключении
 			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
 				log.Printf("DB Error [%s] %s (Code: %s): %s", connInfo, pgErr.Message, pgErr.Code, err)
 			} else {
 				log.Printf("DB Error [%s]: %s", connInfo, err)
 			}
-
 			time.Sleep(1 * time.Second)
 			continue
 		}
 
-		// Получаем информацию о подключении при успешном запросе
 		connInfo := GetConnectionInfo(ctx, pool)
 		rowsAffected, _ := result.RowsAffected()
 		log.Printf("Successful [%s]: rows affected: %d", connInfo, rowsAffected)
-
 		time.Sleep(1 * time.Second)
 	}
 }
 
-// GetConnectionInfo возвращает информацию о текущем подключении
+func buildConnStringFromEnv() string {
+	user := os.Getenv("PG_USER")
+	password := os.Getenv("PG_PASSWORD")
+	host := os.Getenv("PG_HOST")
+	port := os.Getenv("PG_PORT")
+	db := os.Getenv("PG_DB")
+
+	poolMaxConns := os.Getenv("POOL_MAX_CONNS")
+	poolMinConns := os.Getenv("POOL_MIN_CONNS")
+	poolMaxConnLifetime := os.Getenv("POOL_MAX_CONN_LIFETIME")
+	poolMaxConnIdleTime := os.Getenv("POOL_MAX_CONN_IDLE_TIME")
+	defaultQueryExecMode := os.Getenv("DEFAULT_QUERY_EXEC_MODE")
+
+	// Формируем строку соединения с учётом переменных окружения
+	connString := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?pool_max_conns=%s&pool_min_conns=%s&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&default_query_exec_mode=%s",
+		user, password, host, port, db,
+		poolMaxConns, poolMinConns, poolMaxConnLifetime, poolMaxConnIdleTime, defaultQueryExecMode,
+	)
+
+	return connString
+}
+
 func GetConnectionInfo(ctx context.Context, pool *pgxpool.Pool) string {
 	var connInfo strings.Builder
-
-	// Получаем статистику пула
 	stat := pool.Stat()
 	connInfo.WriteString(fmt.Sprintf("Pool total: %d, acquired: %d, idle: %d | ",
 		stat.TotalConns(), stat.AcquiredConns(), stat.IdleConns()))
 
-	// Пробуем получить дополнительную информацию о сервере
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
 		return connInfo.String() + "Failed to acquire connection"
 	}
 	defer conn.Release()
 
-	// Получаем IP адрес и порт подключения
 	remoteAddr := conn.Conn().PgConn().Conn().RemoteAddr().String()
 	host, _, _ := net.SplitHostPort(remoteAddr)
 
-	// Проверяем, является ли соединение только для чтения
 	var readOnly bool
 	err = conn.QueryRow(ctx, "SELECT pg_is_in_recovery()").Scan(&readOnly)
 	if err != nil {
@@ -95,14 +113,12 @@ func GetConnectionInfo(ctx context.Context, pool *pgxpool.Pool) string {
 		return connInfo.String()
 	}
 
-	// Добавляем информацию о сервере
 	serverType := "Master"
 	if readOnly {
 		serverType = "Replica"
 	}
 
 	connInfo.WriteString(fmt.Sprintf("IP: %s, Type: %s", host, serverType))
-
 	return connInfo.String()
 }
 
@@ -111,7 +127,6 @@ func GetDB(ctx context.Context, uri string) (*sqlx.DB, *pgxpool.Pool, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
 	return DB, pool, nil
 }
 
