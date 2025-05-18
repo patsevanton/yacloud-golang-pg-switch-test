@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"net"
+	"strings"
 	"time"
-// 	"fmt"
 
+// 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -16,11 +20,11 @@ import (
 func main() {
 	ctx := context.TODO()
 
-	connString := "postgres://test:xxx@xxxx@c-xxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
+	connString := "postgres://test:xxxx@c-xxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
 		"pool_max_conns=2&pool_min_conns=10&pool_max_conn_lifetime=1h" +
 		"&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol"
 
-	db, err := GetDB(ctx, connString)
+	db, pool, err := GetDB(ctx, connString)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,43 +39,100 @@ func main() {
 	}
 
 	for {
-// 	    fmt.Println(db.Stats())
-		if _, err := db.Exec(
-			`insert into "test" ("created_at") values ($1)`, time.Now()); err != nil {
-			log.Print(err)
-			time.Sleep(1 * time.Second)
+		result, err := db.Exec(
+			`insert into "test" ("created_at") values ($1)`, time.Now())
 
+		if err != nil {
+			// Получаем информацию о состоянии подключения
+			connInfo := GetConnectionInfo(ctx, pool)
+
+			// Логируем ошибку вместе с информацией о подключении
+			pgErr, ok := err.(*pgconn.PgError)
+			if ok {
+				log.Printf("DB Error [%s] %s (Code: %s): %s", connInfo, pgErr.Message, pgErr.Code, err)
+			} else {
+				log.Printf("DB Error [%s]: %s", connInfo, err)
+			}
+
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
-		log.Print("successful ")
+		// Получаем информацию о подключении при успешном запросе
+		connInfo := GetConnectionInfo(ctx, pool)
+		rowsAffected, _ := result.RowsAffected()
+		log.Printf("Successful [%s]: rows affected: %d", connInfo, rowsAffected)
+
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func GetDB(ctx context.Context, uri string) (*sqlx.DB, error) {
-	DB, err := PgxCreateDB(ctx, uri)
+// GetConnectionInfo возвращает информацию о текущем подключении
+func GetConnectionInfo(ctx context.Context, pool *pgxpool.Pool) string {
+	var connInfo strings.Builder
+
+	// Получаем статистику пула
+	stat := pool.Stat()
+	connInfo.WriteString(fmt.Sprintf("Pool total: %d, acquired: %d, idle: %d | ",
+		stat.TotalConns(), stat.AcquiredConns(), stat.IdleConns()))
+
+	// Пробуем получить дополнительную информацию о сервере
+	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		return nil, err
+		return connInfo.String() + "Failed to acquire connection"
+	}
+	defer conn.Release()
+
+	// Получаем IP адрес и порт подключения
+	remoteAddr := conn.Conn().PgConn().Conn().RemoteAddr().String()
+	host, _, _ := net.SplitHostPort(remoteAddr)
+
+	// Проверяем, является ли соединение только для чтения
+	var readOnly bool
+	err = conn.QueryRow(ctx, "SELECT pg_is_in_recovery()").Scan(&readOnly)
+	if err != nil {
+		connInfo.WriteString(fmt.Sprintf("IP: %s, Error getting read-only status", host))
+		return connInfo.String()
+	}
+
+	// Добавляем информацию о сервере
+	serverType := "Master"
+	if readOnly {
+		serverType = "Replica"
+	}
+
+	connInfo.WriteString(fmt.Sprintf("IP: %s, Type: %s", host, serverType))
+
+	return connInfo.String()
+}
+
+func GetDB(ctx context.Context, uri string) (*sqlx.DB, *pgxpool.Pool, error) {
+	DB, pool, err := PgxCreateDB(ctx, uri)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	DB.SetMaxIdleConns(0)
 	DB.SetMaxOpenConns(10)
 
-	return DB, nil
+	return DB, pool, nil
 }
 
-func PgxCreateDB(ctx context.Context, uri string) (*sqlx.DB, error) {
-	connConfig, _ := pgxpool.ParseConfig(uri)
+func PgxCreateDB(ctx context.Context, uri string) (*sqlx.DB, *pgxpool.Pool, error) {
+	connConfig, err := pgxpool.ParseConfig(uri)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse connection config: %w", err)
+	}
+
 	pool, err := pgxpool.NewWithConfig(ctx, connConfig)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}
 
 	if err := pool.Ping(ctx); err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("failed to ping DB: %w", err)
 	}
 
 	pgxdb := stdlib.OpenDBFromPool(pool)
-	return sqlx.NewDb(pgxdb, "pgx"), nil
+	return sqlx.NewDb(pgxdb, "pgx"), pool, nil
 }
