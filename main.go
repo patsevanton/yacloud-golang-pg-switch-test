@@ -17,7 +17,6 @@ import (
 )
 
 func main() {
-	// Загружаем переменные окружения из .env файла
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: no .env file found, trying to read env from system")
 	}
@@ -82,7 +81,6 @@ func buildConnStringFromEnv() string {
 	defaultQueryExecMode := os.Getenv("DEFAULT_QUERY_EXEC_MODE")
 	targetSessionAttrs := os.Getenv("TARGET_SESSION_ATTRS")
 
-	// Формируем строку соединения с учётом переменных окружения
 	connString := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?pool_max_conns=%s&pool_min_conns=%s&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&default_query_exec_mode=%s&target_session_attrs=%s",
 		user, password, host, port, db,
