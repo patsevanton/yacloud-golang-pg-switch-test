@@ -28,7 +28,7 @@ func main() {
 
 	connString := "postgres://test:xxxx@c-xxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
 		"pool_max_conns=2&pool_min_conns=2&pool_max_conn_lifetime=1h" +
-		"&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol"
+		"&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol&target_session_attrs=read-write"
 
 	log.Println(connString)
 	db, pool, err := GetDB(ctx, connString)
@@ -80,12 +80,13 @@ func buildConnStringFromEnv() string {
 	poolMaxConnLifetime := os.Getenv("POOL_MAX_CONN_LIFETIME")
 	poolMaxConnIdleTime := os.Getenv("POOL_MAX_CONN_IDLE_TIME")
 	defaultQueryExecMode := os.Getenv("DEFAULT_QUERY_EXEC_MODE")
+	targetSessionAttrs := os.Getenv("TARGET_SESSION_ATTRS")
 
 	// Формируем строку соединения с учётом переменных окружения
 	connString := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?pool_max_conns=%s&pool_min_conns=%s&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&default_query_exec_mode=%s",
+		"postgres://%s:%s@%s:%s/%s?pool_max_conns=%s&pool_min_conns=%s&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&default_query_exec_mode=%s&target_session_attrs=%s",
 		user, password, host, port, db,
-		poolMaxConns, poolMinConns, poolMaxConnLifetime, poolMaxConnIdleTime, defaultQueryExecMode,
+		poolMaxConns, poolMinConns, poolMaxConnLifetime, poolMaxConnIdleTime, defaultQueryExecMode, targetSessionAttrs,
 	)
 
 	return connString
