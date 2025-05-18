@@ -22,14 +22,10 @@ func main() {
 	}
 
 	ctx := context.TODO()
-	connString1 := buildConnStringFromEnv()
-	log.Println(connString1)
 
-	connString := "postgres://test:xxxx@c-xxxx.rw.mdb.yandexcloud.net:6432/testdb?" +
-		"pool_max_conns=2&pool_min_conns=2&pool_max_conn_lifetime=1h" +
-		"&pool_max_conn_idle_time=30m&default_query_exec_mode=simple_protocol&target_session_attrs=read-write"
-
+	connString := buildConnStringFromEnv()
 	log.Println(connString)
+
 	db, pool, err := GetDB(ctx, connString)
 	if err != nil {
 		log.Fatal(err)
