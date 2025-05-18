@@ -92,9 +92,10 @@ PG_USER=${yandex_mdb_postgresql_user.my_user.name}
 PG_PASSWORD=${yandex_mdb_postgresql_user.my_user.password}
 PG_DB=${yandex_mdb_postgresql_database.my_db.name}
 POOL_MAX_CONNS=2
-POOL_MIN_CONNS=10
+POOL_MIN_CONNS=2
 POOL_MAX_CONN_LIFETIME=1h
 POOL_MAX_CONN_IDLE_TIME=30m
 DEFAULT_QUERY_EXEC_MODE=simple_protocol
+TARGET_SESSION_ATTRS=any
 EOT
 }
