@@ -82,9 +82,10 @@ func buildConnStringFromEnv() string {
 	targetSessionAttrs := os.Getenv("TARGET_SESSION_ATTRS")
 
 	connString := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?pool_max_conns=%s&pool_min_conns=%s&pool_max_conn_lifetime=%s&pool_max_conn_idle_time=%s&default_query_exec_mode=%s&target_session_attrs=%s",
-		user, password, host, port, db,
-		poolMaxConns, poolMinConns, poolMaxConnLifetime, poolMaxConnIdleTime, defaultQueryExecMode, targetSessionAttrs,
+		"postgres://%s:%s@%s:%s/%s?pool_max_conns=%s&pool_min_conns=%s&pool_max_conn_lifetime=%s" +
+		"&pool_max_conn_idle_time=%s&default_query_exec_mode=%s&target_session_attrs=%s",
+		user, password, host, port, db, poolMaxConns, poolMinConns, poolMaxConnLifetime,
+		poolMaxConnIdleTime, defaultQueryExecMode, targetSessionAttrs,
 	)
 
 	return connString
